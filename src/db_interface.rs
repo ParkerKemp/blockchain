@@ -17,6 +17,11 @@ impl DBInterface {
         Ok(())
     }
 
-    //pub fn execute_query(&self, query: &str, params: rusqlite::Params) -> Result<(), rusqlite::Error> {
-    //}
+    pub fn execute_query<P, F, T>(&self, query: &str, params: P, func: F) -> Result<T, rusqlite::Error>
+    where
+        P: rusqlite::Params,
+        F: FnOnce(&rusqlite::Row<'_>) -> Result<T, rusqlite::Error>,
+    {
+        return self.connection.query_row(query, params, func);
+    }
 }
