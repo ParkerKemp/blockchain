@@ -8,7 +8,15 @@ impl DBInterface {
     }
 
     pub fn init_db(&self) -> Result<(), rusqlite::Error> {
-        self.connection.execute("CREATE TABLE IF NOT EXISTS blocks (hash TEXT, last_hast TEXT, next_strength INTEGER, nonce TEXT, timestamp INTEGER)", [])?;
+        self.connection.execute("CREATE TABLE IF NOT EXISTS blocks (hash TEXT, last_hash TEXT, next_strength INTEGER, nonce TEXT, timestamp INTEGER)", [])?;
         Ok(())
     }
+
+    pub fn execute<P: rusqlite::Params>(&self, query: &str, params: P) -> Result<(), rusqlite::Error> {
+        self.connection.execute(query, params)?;
+        Ok(())
+    }
+
+    //pub fn execute_query(&self, query: &str, params: rusqlite::Params) -> Result<(), rusqlite::Error> {
+    //}
 }
