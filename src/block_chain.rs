@@ -32,15 +32,19 @@ impl BlockChain {
     }
 
     pub fn verify_block(&self, block: &Block) -> Result<bool, rusqlite::Error> {
-        if block.calc_hash() != block.hash.as_ref().unwrap() {
+        if &block.calc_hash() != block.hash.as_ref().unwrap() {
             return Ok(false);
         }
 
         return self.verify_block(&Block::load(&block.last_hash, &Rc::clone(&self.interface))?);
     }
 
-    pub fn guess_next_block() -> () {
-        
+    pub fn guess_next_block(&mut self) -> () {
+        // Apparently this is how you should dereference an Option<T> https://stackoverflow.com/questions/27361350/calling-a-method-on-a-value-inside-a-mutable-option
+        if let Some(newest) = &mut self.newest {
+            newest.roll(1, Self::nonce(), Self::current_unix_time());
+            newest.print();
+        }
     }
 
     fn create_genesis(&self) -> Block {
@@ -53,6 +57,6 @@ impl BlockChain {
 
     fn nonce() -> String {
         let bytes = rand::thread_rng().gen::<[u8; 32]>();
-        return String::from(std::str::from_utf8(&bytes).unwrap());
+        return hex::encode(&bytes);
     }
 }

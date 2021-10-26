@@ -1,3 +1,4 @@
+use sha1::{Sha1, Digest};
 use std::rc::Rc;
 
 use crate::db_block::DBBlock;
@@ -9,7 +10,7 @@ pub struct Block {
     pub last_hash: String,
     pub next_strength: i32,
     pub nonce: String,
-    pub timestamp: i32,
+    pub timestamp: u64,
 
     db_block: DBBlock
 }
@@ -56,7 +57,7 @@ impl Block {
 
     }
 
-    fn load_from_row(row: (String, i32, String, i32, String, i32), db_block: DBBlock) -> Self {
+    fn load_from_row(row: (String, i32, String, i32, String, u64), db_block: DBBlock) -> Self {
         return Block {
             hash: Some(row.0),
             length: row.1,
@@ -68,8 +69,28 @@ impl Block {
         };
     }
 
-    pub fn calc_hash(&self) -> &String {
-        return self.hash.as_ref().unwrap();
+    pub fn roll(&mut self, next_strength: i32, nonce: String, timestamp: u64) -> String {
+        self.next_strength = next_strength;
+        self.nonce = nonce;
+        self.timestamp = timestamp;
+        return self.calc_hash();
+    }
+
+    pub fn calc_hash(&self) -> String {
+        let mut hasher = Sha1::new();
+        hasher.update(self.serialize().unwrap().as_slice());
+        return hex::encode(hasher.finalize());
+    }
+
+    fn serialize(&self) -> Result<Vec<u8>, hex::FromHexError> {
+        // length + last_hash + next strength + nonce + timestamp
+        Ok([
+            self.length.to_be_bytes().to_vec(),
+            hex::decode(&self.last_hash)?,
+            self.next_strength.to_be_bytes().to_vec(),
+            hex::decode(&self.nonce)?,
+            self.timestamp.to_be_bytes().to_vec()
+        ].concat())
     }
 
     pub fn save(&self) -> Result<(), rusqlite::Error> {
@@ -85,5 +106,6 @@ impl Block {
         println!("next_strength: {}", &self.next_strength);
         println!("nonce: {}", &self.nonce);
         println!("timestamp: {}", &self.timestamp);
+        println!("serialized: {}", hex::encode(&self.serialize().unwrap().as_slice()));
     }
 }

@@ -15,6 +15,8 @@ fn main() -> Result<(), rusqlite::Error> {
     } else {
         println!("Failed to load chain");
     }
+
+    block_chain.guess_next_block();
     //let block = block::Block::load(String::from("asdf"), &Rc::clone(&db_interface))?;
     //block.print();
     //let block = block::Block::new(String::from("asdf"), String::from("1234"), 10, String::from("2345"), 12345, db_interface);
