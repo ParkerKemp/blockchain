@@ -8,3 +8,4 @@ edition = "2018"
 
 [dependencies]
 rusqlite = "0.26.1"
+rand = "0.8.4"
