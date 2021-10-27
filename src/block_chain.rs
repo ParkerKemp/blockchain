@@ -4,14 +4,15 @@ use rand::Rng;
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::rc::Rc;
 use std::option::Option;
+use std::mem::swap;
 
 use crate::db_interface::DBInterface;
 use crate::block::Block;
 
 const GENESIS_HASH: &str = "00000000000000000000000000000000";
 
-const TARGET_MINING_DURATION: u64 = 60;
-const DURATION_MARGIN: u64 = 5;
+const TARGET_MINING_DURATION: u64 = 10;
+const DURATION_MARGIN: u64 = 2;
 
 pub struct BlockChain {
     interface: Rc<DBInterface>,
@@ -96,12 +97,11 @@ impl BlockChain {
         return true;
     }
 
-    fn calc_next_strength(&self) -> u8 {
+    fn calc_next_strength(&self, current_time: u64) -> u8 {
         let target_strength = self.required_strength();
 
         match &self.last {
             Some(last) => {
-                let current_time = Self::current_unix_time();
                 let duration = current_time - last.timestamp;
 
                 if duration < TARGET_MINING_DURATION - DURATION_MARGIN {
@@ -126,16 +126,25 @@ impl BlockChain {
     }
 
     pub fn guess_next_block(&mut self) -> () {
+        let current_time = Self::current_unix_time();
         let target_strength = self.required_strength();
-        let next_strength = self.calc_next_strength();
+        let next_strength = self.calc_next_strength(current_time);
 
         // Apparently this is how you should dereference an Option<T> https://stackoverflow.com/questions/27361350/calling-a-method-on-a-value-inside-a-mutable-option
         if let Some(next) = &mut self.next {
-            next.roll(next_strength, Self::nonce(), Self::current_unix_time());
-            next.print();
+            next.roll(next_strength, Self::nonce(), current_time);
 
             if Self::check_strength(next.hash.as_ref().unwrap(), &target_strength) {
+                next.print();
+                let duration = current_time - match &self.last {
+                    Some(last) => last.timestamp,
+                    None => current_time
+                };
+
+                println!("Duration: {}", duration);
                 next.save();
+                swap(&mut self.last, &mut self.next);
+                self.next = Some(self.create_next());
             }
         }
     }
