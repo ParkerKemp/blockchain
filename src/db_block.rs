@@ -7,13 +7,13 @@ pub struct DBBlock {
 }
 
 impl DBBlock {
-    pub fn insert_block(&self, hash: &String, length: &i32, last_hash: &String, next_strength: &i32, nonce: &String, timestamp: &u64) -> Result<(), rusqlite::Error> {
+    pub fn insert_block(&self, hash: &String, length: &i32, last_hash: &String, next_strength: &u8, nonce: &String, timestamp: &u64) -> Result<(), rusqlite::Error> {
         let query = "INSERT INTO blocks (hash, length, last_hash, next_strength, nonce, timestamp) VALUES (?, ?, ?, ?, ?, ?)";
         self.interface.execute(query, rusqlite::params![hash, length, last_hash, next_strength, nonce, timestamp])?;
         Ok(())
     }
 
-    pub fn load_block(&self, hash: &String) -> Result<(String, i32, String, i32, String, u64), rusqlite::Error> {
+    pub fn load_block(&self, hash: &String) -> Result<(String, i32, String, u8, String, u64), rusqlite::Error> {
         let query = "SELECT hash, length, last_hash, next_strength, nonce, timestamp FROM blocks WHERE hash = ?";
         return self.interface.execute_query(
             query,
@@ -31,7 +31,7 @@ impl DBBlock {
         );
     }
 
-    pub fn load_newest(&self) -> Result<(String, i32, String, i32, String, u64), rusqlite::Error> {
+    pub fn load_newest(&self) -> Result<(String, i32, String, u8, String, u64), rusqlite::Error> {
         let query = "SELECT hash, length, last_hash, next_strength, nonce, timestamp FROM blocks ORDER BY length DESC LIMIT 1";
         return self.interface.execute_query(
             query,

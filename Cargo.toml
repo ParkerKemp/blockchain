@@ -11,3 +11,6 @@ rusqlite = "0.26.1"
 rand = "0.8.4"
 hex = "0.3.1"
 sha-1 = "0.9.8"
+bit-array = "0.4.4"
+typenum = "1.3"
+

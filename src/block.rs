@@ -8,7 +8,7 @@ pub struct Block {
     pub hash: Option<String>,
     pub length: i32,
     pub last_hash: String,
-    pub next_strength: i32,
+    pub next_strength: u8,
     pub nonce: String,
     pub timestamp: u64,
 
@@ -57,7 +57,7 @@ impl Block {
 
     }
 
-    fn load_from_row(row: (String, i32, String, i32, String, u64), db_block: DBBlock) -> Self {
+    fn load_from_row(row: (String, i32, String, u8, String, u64), db_block: DBBlock) -> Self {
         return Block {
             hash: Some(row.0),
             length: row.1,
@@ -69,11 +69,12 @@ impl Block {
         };
     }
 
-    pub fn roll(&mut self, next_strength: i32, nonce: String, timestamp: u64) -> String {
+    pub fn roll(&mut self, next_strength: u8, nonce: String, timestamp: u64) -> &String {
         self.next_strength = next_strength;
         self.nonce = nonce;
         self.timestamp = timestamp;
-        return self.calc_hash();
+        self.hash = Some(self.calc_hash());
+        return self.hash.as_ref().unwrap();
     }
 
     pub fn calc_hash(&self) -> String {

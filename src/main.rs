@@ -1,3 +1,4 @@
+extern crate typenum;
 mod db_block;
 mod db_interface;
 mod block;
