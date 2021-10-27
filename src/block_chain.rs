@@ -10,6 +10,9 @@ use crate::block::Block;
 
 const GENESIS_HASH: &str = "00000000000000000000000000000000";
 
+const TARGET_MINING_DURATION: u64 = 60;
+const DURATION_MARGIN: u64 = 5;
+
 pub struct BlockChain {
     interface: Rc<DBInterface>,
     last: Option<Block>,
@@ -50,10 +53,6 @@ impl BlockChain {
         return Block::new(last.hash.as_ref().unwrap().clone(), last.length + 1, &Rc::clone(&self.interface));
     }
 
-    fn calc_next_strength(&self) -> i32 {
-        return 1;
-    }
-
     pub fn verify_chain(&self, block: &Block, child_block: Option<&Block>) -> Result<bool, rusqlite::Error> {
         // !!!!!!!!!!!! Still need to figure out how to verify hash strength. Since it is enforced "forward" and we are traversing "backward" we may need to track two blocks at once during this recursion
 
@@ -80,14 +79,14 @@ impl BlockChain {
         return true;
     }
 
-    fn check_strength(hash: &String, strength: &usize) -> bool {
-        let mut i = 0usize;
+    fn check_strength(hash: &String, strength: &u8) -> bool {
+        let mut i = 0u8;
 
         let hex = hex::decode(&hash).unwrap();
         let bits: BitArray<u32, typenum::U160>  = BitArray::from_bytes(&hex);
 
         while &i < strength {
-            if bits.get(i).unwrap() == true {
+            if bits.get(usize::from(i)).unwrap() == true {
                 return false;
             }
 
@@ -97,18 +96,49 @@ impl BlockChain {
         return true;
     }
 
+    fn calc_next_strength(&self) -> u8 {
+        let target_strength = self.required_strength();
+
+        match &self.last {
+            Some(last) => {
+                let current_time = Self::current_unix_time();
+                let duration = current_time - last.timestamp;
+
+                if duration < TARGET_MINING_DURATION - DURATION_MARGIN {
+                    return target_strength + 1;
+                }
+
+                if duration > TARGET_MINING_DURATION + DURATION_MARGIN && target_strength > 0 {
+                    return target_strength - 1;
+                }
+
+                return target_strength;
+            },
+            None => 1
+        }
+    }
+
+    fn required_strength(&self) -> u8 {
+        match &self.last {
+            Some(last) => last.next_strength,
+            None => 1
+        }
+    }
+
     pub fn guess_next_block(&mut self) -> () {
+        let target_strength = self.required_strength();
+        let next_strength = self.calc_next_strength();
+
         // Apparently this is how you should dereference an Option<T> https://stackoverflow.com/questions/27361350/calling-a-method-on-a-value-inside-a-mutable-option
         if let Some(next) = &mut self.next {
-            next.roll(1, Self::nonce(), Self::current_unix_time());
+            next.roll(next_strength, Self::nonce(), Self::current_unix_time());
             next.print();
 
-            if Self::check_strength(next.hash.as_ref().unwrap(), &1) {
+            if Self::check_strength(next.hash.as_ref().unwrap(), &target_strength) {
                 next.save();
             }
         }
     }
-
 
     fn create_genesis(&self) -> Block {
         return Block::new(String::from(GENESIS_HASH), 1, &Rc::clone(&self.interface));
