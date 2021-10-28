@@ -100,7 +100,7 @@ impl Block {
         Ok(())
     }
 
-    pub fn print(&self) -> () {
+    pub fn print(&self, duration_secs: f64, count: &u64, strength: &u8) -> () {
         println!();
         println!("===================================");
         println!("hash: {}", &self.calc_hash());
@@ -109,7 +109,10 @@ impl Block {
         //println!("nonce: {}", &self.nonce);
         //println!("timestamp: {}", &self.timestamp);
         println!("serialized block: {}", hex::encode(&self.serialize().unwrap().as_slice()));
+        println!("strength: {}", strength);
         println!("next strength: {}", &self.next_strength);
+        println!();
+        println!("{} guesses in {}s: {} h/s", count, duration_secs, *count as f64 / duration_secs);
         println!("===================================");
     }
 }

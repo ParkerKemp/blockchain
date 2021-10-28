@@ -1,4 +1,5 @@
 //use bitvec::{slice::BitSlice, order::Lsb0, bits};
+use std::convert::TryFrom;
 use bit_array::BitArray;
 use rand::Rng;
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -11,13 +12,14 @@ use crate::block::Block;
 
 const GENESIS_HASH: &str = "00000000000000000000000000000000";
 
-const TARGET_MINING_DURATION: u64 = 10 * 60;
-const DURATION_MARGIN: u64 = 2;
+const TARGET_MINING_DURATION: u64 = 10 * 60 * 1000;
+const DURATION_MARGIN: u64 = 2 * 1000;
 
 pub struct BlockChain {
     interface: Rc<DBInterface>,
     last: Option<Block>,
-    next: Option<Block>
+    next: Option<Block>,
+    counter: u64,
 }
 
 impl BlockChain {
@@ -26,6 +28,7 @@ impl BlockChain {
             interface: Rc::clone(interface),
             last: Option::None,
             next: Option::None,
+            counter: 0,
         };
     }
 
@@ -133,15 +136,18 @@ impl BlockChain {
         // Apparently this is how you should dereference an Option<T> https://stackoverflow.com/questions/27361350/calling-a-method-on-a-value-inside-a-mutable-option
         if let Some(next) = &mut self.next {
             next.roll(next_strength, Self::nonce(), current_time);
+            self.counter += 1;
 
             if Self::check_strength(next.hash.as_ref().unwrap(), &target_strength) {
-                next.print();
                 let duration = current_time - match &self.last {
                     Some(last) => last.timestamp,
                     None => current_time
                 };
 
-                println!("Duration: {}", duration);
+                let duration_secs = duration as f64 / 1000f64;
+                next.print(duration_secs, &self.counter, &target_strength);
+                self.counter = 0;
+
                 next.save();
                 swap(&mut self.last, &mut self.next);
                 self.next = Some(self.create_next());
@@ -154,7 +160,7 @@ impl BlockChain {
     }
 
     fn current_unix_time() -> u64 {
-        return SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
+        return u64::try_from(SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis()).unwrap();
     }
 
     fn nonce() -> String {
