@@ -112,7 +112,43 @@ impl Block {
         println!("strength: {}", strength);
         println!("next strength: {}", &self.next_strength);
         println!();
-        println!("{} guesses in {}s: {} h/s", count, duration_secs, *count as f64 / duration_secs);
+        println!("{} guesses in {}s: {}", count, duration_secs, Self::format_hashrate(&duration_secs, &count));
         println!("===================================");
+    }
+
+    fn format_hashrate(duration_secs: &f64, count: &u64) -> String {
+        let mut rate = *count as f64 / duration_secs;
+
+        if rate < 1000f64 {
+            return format!("{:.3} H/s", rate);
+        }
+
+        rate /= 1000f64;
+
+        if rate < 1000f64 {
+            return format!("{:.3} kH/s", rate);
+        }
+
+        rate /= 1000f64;
+
+        if rate < 1000f64 {
+            return format!("{:.3} MH/s", rate);
+        }
+
+        rate /= 1000f64;
+
+        if rate < 1000f64 {
+            return format!("{:.3} GH/s", rate);
+        }
+
+        rate /= 1000f64;
+
+        if rate < 1000f64 {
+            return format!("{:.3} TH/s", rate);
+        }
+
+        rate /= 1000f64;
+
+        return format!("{:.3} PH/s", rate);
     }
 }
