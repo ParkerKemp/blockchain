@@ -11,9 +11,7 @@ fn main() -> Result<(), rusqlite::Error> {
     db_interface.init_db()?;
 
     let mut block_chain = block_chain::BlockChain::new(&Rc::clone(&db_interface));
-    if block_chain.load_chain()? {
-        println!("Successfully loaded chain");
-    } else {
+    if !block_chain.load_chain()? {
         println!("Failed to load chain");
     }
 

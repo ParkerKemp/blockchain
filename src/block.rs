@@ -101,12 +101,15 @@ impl Block {
     }
 
     pub fn print(&self) -> () {
+        println!();
+        println!("===================================");
         println!("hash: {}", &self.calc_hash());
-        println!("length: {}", &self.length);
-        println!("last_hash: {}", &self.last_hash);
-        println!("next_strength: {}", &self.next_strength);
-        println!("nonce: {}", &self.nonce);
-        println!("timestamp: {}", &self.timestamp);
-        println!("serialized: {}", hex::encode(&self.serialize().unwrap().as_slice()));
+        //println!("length: {}", &self.length);
+        //println!("last_hash: {}", &self.last_hash);
+        //println!("nonce: {}", &self.nonce);
+        //println!("timestamp: {}", &self.timestamp);
+        println!("serialized block: {}", hex::encode(&self.serialize().unwrap().as_slice()));
+        println!("next strength: {}", &self.next_strength);
+        println!("===================================");
     }
 }

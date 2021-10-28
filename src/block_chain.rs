@@ -11,7 +11,7 @@ use crate::block::Block;
 
 const GENESIS_HASH: &str = "00000000000000000000000000000000";
 
-const TARGET_MINING_DURATION: u64 = 10;
+const TARGET_MINING_DURATION: u64 = 10 * 60;
 const DURATION_MARGIN: u64 = 2;
 
 pub struct BlockChain {
